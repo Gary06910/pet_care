@@ -5,6 +5,7 @@
 # next.js
 /.next
 /out
+/.netlify-upload-*
 /.vercel
 
 # production
@@ -35,3 +36,6 @@ pnpm-debug.log*
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+
+# Local Netlify folder
+.netlify

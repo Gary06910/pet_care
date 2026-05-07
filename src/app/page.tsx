@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import type { FormEvent, ReactNode } from "react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 type IconName =
   | "paw"
@@ -14,6 +15,7 @@ type IconName =
   | "check"
   | "pin"
   | "phone"
+  | "wechat"
   | "clock";
 
 const navLinks = [
@@ -101,18 +103,56 @@ const reviews = [
     avatar: "陈",
     name: "陈小姐",
     pet: "英短猫主人",
+    tag: "猫咪洗护",
   },
   {
     body: "我家比熊以前剪脸总翻车，这次沟通得很细，修完很自然，回家也好打理。",
     avatar: "周",
     name: "周先生",
     pet: "比熊犬主人",
+    tag: "造型精修",
   },
   {
     body: "接送很方便，洗护结束会发照片和问题反馈，适合上班日安排。",
     avatar: "林",
     name: "林女士",
     pet: "柯基犬主人",
+    tag: "门店接送",
+  },
+  {
+    body: "护理师会先检查皮肤和毛结，没有直接硬梳。我们家金毛洗完没有香精味，毛摸起来很干净。",
+    avatar: "吴",
+    name: "吴女士",
+    pet: "金毛犬主人",
+    tag: "基础香浴",
+  },
+  {
+    body: "雪纳瑞嘴边毛容易打结，这次修得很利落，眼睛周围也清爽，拍照特别精神。",
+    avatar: "赵",
+    name: "赵先生",
+    pet: "雪纳瑞主人",
+    tag: "脸部修剪",
+  },
+  {
+    body: "家里两只猫一起预约，工作人员分开安置，整个过程很安静。回家后没有躲起来，状态比预想好。",
+    avatar: "黄",
+    name: "黄小姐",
+    pet: "双猫家庭",
+    tag: "低应激护理",
+  },
+  {
+    body: "预约时间很准，护理前后都会确认需求。泰迪腿型剪得匀称，下次会继续固定找这位护理师。",
+    avatar: "刘",
+    name: "刘女士",
+    pet: "泰迪犬主人",
+    tag: "固定护理师",
+  },
+  {
+    body: "换毛季掉毛严重，做完去浮毛护理后家里轻松很多。护理建议写得很清楚，能直接照着做。",
+    avatar: "孙",
+    name: "孙先生",
+    pet: "萨摩耶主人",
+    tag: "皮毛 SPA",
   },
 ];
 
@@ -192,6 +232,12 @@ function Icon({ name, className = "" }: { name: IconName; className?: string }) 
         strokeWidth="2"
       />
     ),
+    wechat: (
+      <>
+        <path d="M8.6 17.4 5 19l.8-3.1A6.7 6.7 0 0 1 3 10.6C3 6.9 6.6 4 11 4s8 2.9 8 6.6-3.6 6.6-8 6.6c-.8 0-1.6-.1-2.4-.4Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M8.2 9.4h.1M13.7 9.4h.1" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      </>
+    ),
     clock: <path d="M12 6v6l4 2M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />,
   };
 
@@ -227,21 +273,57 @@ function ButtonLink({
 }
 
 export default function Home() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState("");
+  const [submitError, setSubmitError] = useState("");
   const minDate = useMemo(() => {
     const today = new Date();
     today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
     return today.toISOString().slice(0, 10);
   }, []);
+  const reviewLoopItems = useMemo(() => [...reviews, ...reviews], []);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isSubmitting) {
+      return;
+    }
+
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const name = String(formData.get("name") || "您");
-    const service = String(formData.get("service") || "洗护服务");
+    const payload = {
+      name: String(formData.get("name") || "").trim(),
+      phone: String(formData.get("phone") || "").trim(),
+      pet: String(formData.get("pet") || "").trim(),
+      service: String(formData.get("service") || "").trim(),
+      date: String(formData.get("date") || "").trim(),
+      time: String(formData.get("time") || "").trim(),
+      note: String(formData.get("note") || "").trim(),
+    };
 
-    window.alert(`${name}，${service}预约已记录。演示页面中请接入实际表单接口或客服二维码。`);
-    form.reset();
+    setIsSubmitting(true);
+    setSubmitMessage("");
+    setSubmitError("");
+
+    try {
+      const response = await fetch("/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result.error || "预约提交失败，请稍后再试。");
+      }
+
+      setSubmitMessage(`${payload.name}，${payload.service}预约已提交，店员会尽快联系您确认档期。`);
+      form.reset();
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "预约提交失败，请稍后再试。");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -456,12 +538,21 @@ export default function Home() {
                     <textarea className={`${inputClassName} min-h-[116px] resize-y pt-3`} id="note" name="note" placeholder="例如：8kg 柯基，怕吹水，有轻微毛结" />
                   </Field>
                   <div className="col-span-full grid gap-3">
-                    <button className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border-0 bg-[var(--coral)] px-[18px] font-bold text-white shadow-[0_12px_24px_rgba(232,111,81,0.24)] transition hover:bg-[#d95f43]" type="submit">
+                    <button
+                      className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border-0 bg-[var(--coral)] px-[18px] font-bold text-white shadow-[0_12px_24px_rgba(232,111,81,0.24)] transition hover:bg-[#d95f43] disabled:cursor-not-allowed disabled:opacity-70"
+                      type="submit"
+                      disabled={isSubmitting}
+                    >
                       <Icon name="check" className="size-[18px]" />
-                      提交预约
+                      {isSubmitting ? "提交中..." : "提交预约"}
                     </button>
-                    <p className="m-0 text-[13px] leading-[1.7] text-[var(--muted)]">
-                      演示页面不会真的发送信息，可按实际业务接入表单接口或微信客服。
+                    <p
+                      className={`m-0 text-[13px] leading-[1.7] ${
+                        submitError ? "text-[var(--coral)]" : submitMessage ? "text-[var(--sage-deep)]" : "text-[var(--muted)]"
+                      }`}
+                      aria-live="polite"
+                    >
+                      {submitError || submitMessage || "提交后店员会在营业时间内联系确认档期、项目和预估费用。"}
                     </p>
                   </div>
                 </form>
@@ -470,12 +561,17 @@ export default function Home() {
                 <h3 className="mt-0 text-[28px] font-bold">门店信息</h3>
                 <ul className="my-6 grid gap-[18px]">
                   <VisitItem icon="pin">上海市徐汇区梧桐路 88 号 1F，近地铁 9 号线</VisitItem>
-                  <VisitItem icon="phone">电话：021-6626-8899 / 微信：MuzhuaCare</VisitItem>
+                  <VisitItem icon="phone">电话：021-6626-8899</VisitItem>
+                  <VisitItem icon="wechat">微信：MuzhuaCare</VisitItem>
                   <VisitItem icon="clock">周一至周日 10:00 - 20:30，节假日建议提前预约</VisitItem>
                 </ul>
-                <ButtonLink href="tel:02166268899" variant="secondary">
-                  拨打门店电话
-                </ButtonLink>
+                <Image
+                  className="mt-5 aspect-[16/9] w-full rounded-lg border border-[rgba(255,255,255,0.28)] object-cover shadow-[0_16px_28px_rgba(20,34,29,0.18)]"
+                  src="/assets/store-location-map.png"
+                  width={1672}
+                  height={941}
+                  alt="沐爪宠物洗护门店位置地图，地址为上海市徐汇区梧桐路 88 号 1F，近地铁 9 号线"
+                />
               </aside>
             </div>
           </div>
@@ -484,22 +580,39 @@ export default function Home() {
         <section className="py-[72px] max-[620px]:py-[52px]">
           <div className="mx-auto w-[min(1180px,calc(100%_-_40px))] max-[980px]:w-[min(calc(100%_-_28px),760px)]">
             <SectionHead
-              title="顾客反馈"
-              body="更多评价来自到店复购客户，页面内容可替换为真实案例照片和用户留言。"
+              title="顾客评价"
+              body="来自犬猫家庭的真实洗护体验，覆盖洗澡、造型、接送和低应激护理。"
             />
-            <div className="grid grid-cols-3 gap-4 max-[980px]:grid-cols-1">
-              {reviews.map((review) => (
-                <article key={review.name} className="min-h-[190px] rounded-lg border border-[var(--line)] bg-white p-6 shadow-[0_12px_28px_rgba(38,49,45,0.06)] max-[620px]:p-[22px]">
-                  <p className="leading-[1.75] text-[var(--muted)]">“{review.body}”</p>
-                  <div className="mt-[22px] flex items-center gap-3">
-                    <span className="grid size-[42px] place-items-center rounded-lg bg-[var(--coral)] font-extrabold text-white">{review.avatar}</span>
+            <div
+              className="review-carousel relative overflow-hidden rounded-lg border border-[var(--line)] bg-[rgba(255,255,255,0.56)] py-2 shadow-[0_16px_34px_rgba(38,49,45,0.07)]"
+              aria-label="顾客评价轮播"
+            >
+              <div className="reviews-marquee flex w-max gap-4 py-4 pl-4 max-[620px]:gap-3 max-[620px]:pl-3">
+                {reviewLoopItems.map((review, index) => (
+                  <article
+                    key={`${review.name}-${index}`}
+                    aria-hidden={index >= reviews.length}
+                    className="flex h-[238px] w-[360px] flex-col justify-between rounded-lg border border-[var(--line)] bg-white p-6 shadow-[0_12px_28px_rgba(38,49,45,0.06)] max-[620px]:h-auto max-[620px]:min-h-[232px] max-[620px]:w-[min(78vw,320px)] max-[620px]:p-[22px]"
+                  >
                     <div>
-                      <strong className="block">{review.name}</strong>
-                      <span className="text-[13px] text-[var(--muted)]">{review.pet}</span>
+                      <div className="mb-4 flex items-center justify-between gap-4">
+                        <span className="rounded-full bg-[var(--mint)] px-3 py-1 text-xs font-bold text-[var(--sage-deep)]">{review.tag}</span>
+                        <span className="text-sm tracking-[2px] text-[var(--amber)]" aria-label="五星评价">
+                          ★★★★★
+                        </span>
+                      </div>
+                      <p className="m-0 leading-[1.75] text-[var(--muted)]">“{review.body}”</p>
                     </div>
-                  </div>
-                </article>
-              ))}
+                    <div className="mt-[22px] flex items-center gap-3">
+                      <span className="grid size-[42px] shrink-0 place-items-center rounded-lg bg-[var(--coral)] font-extrabold text-white">{review.avatar}</span>
+                      <div>
+                        <strong className="block">{review.name}</strong>
+                        <span className="text-[13px] text-[var(--muted)]">{review.pet}</span>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
           </div>
         </section>

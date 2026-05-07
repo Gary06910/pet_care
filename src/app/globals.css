@@ -50,3 +50,47 @@ textarea {
 section {
   scroll-margin-top: 92px;
 }
+
+.review-carousel {
+  --review-gap-half: 8px;
+
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+}
+
+.reviews-marquee {
+  animation: reviews-scroll 42s linear infinite;
+}
+
+.review-carousel:hover .reviews-marquee {
+  animation-play-state: paused;
+}
+
+@keyframes reviews-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-50% - var(--review-gap-half)));
+  }
+}
+
+@media (max-width: 620px) {
+  .review-carousel {
+    --review-gap-half: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reviews-marquee {
+    animation: none;
+    overflow-x: auto;
+    width: 100%;
+    scroll-snap-type: x mandatory;
+  }
+
+  .reviews-marquee > article {
+    scroll-snap-align: start;
+  }
+}
