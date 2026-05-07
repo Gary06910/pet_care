@@ -1,6 +1,8 @@
 # 沐爪宠物洗护预约页
 
-这是一个宠物洗护门店展示与预约项目，页面品牌为“沐爪宠物洗护”。项目使用 Next.js、React、TypeScript 和 Tailwind CSS 构建，已部署到 Netlify。
+这是一个宠物洗护门店展示与预约项目，页面品牌为“沐爪宠物洗护”。项目使用 Next.js、React、TypeScript 和 Tailwind CSS 构建，预约数据通过服务端接口写入 PostgreSQL 数据库，并已部署到 Netlify。
+
+![沐爪宠物洗护门店展示](public/assets/readme/pet-care-hero.png)
 
 线上地址：https://pet-care-gary06910.netlify.app
 
@@ -14,6 +16,12 @@
 - 门店信息展示：地址、电话、微信和门店地图。
 - 顾客评价轮播：桌面端自动滚动，用户开启减少动态效果时改为可横向滚动列表。
 
+## 预约流程
+
+![在线预约流程示意](public/assets/readme/booking-flow.png)
+
+用户在页面填写预约信息后，前端会向 `/api/appointments` 发送 `POST` 请求。服务端接口会校验姓名、电话、宠物类型、预约项目、日期、时间和备注长度，然后把有效数据写入 `public.appointments` 表。
+
 ## 技术栈
 
 - Next.js
@@ -23,6 +31,12 @@
 - PostgreSQL，当前使用 `pg` 连接
 - Netlify，使用 `@netlify/plugin-nextjs` 适配 Next.js 部署
 
+## 部署架构
+
+![部署架构示意](public/assets/readme/deployment-architecture.png)
+
+代码推送到 GitHub 后，Netlify 会拉取 `main` 分支，在云端执行 `npm run build`。`@netlify/plugin-nextjs` 会把 Next.js 页面和 API 路由转换为 Netlify 可部署的静态资源与函数。
+
 ## 项目结构
 
 ```text
@@ -31,6 +45,7 @@ src/app/api/appointments/route.ts 预约提交接口
 src/app/layout.tsx                页面元信息与语言设置
 src/app/globals.css               全局样式、颜色变量和轮播动画
 public/assets/                    页面图片资源
+public/assets/readme/             README 插图
 netlify.toml                      Netlify 构建与 Next.js 插件配置
 .env.example                      环境变量示例
 ```
@@ -90,7 +105,7 @@ package = "@netlify/plugin-nextjs"
 
 Netlify 会在云端运行 `npm run build`，并通过 `@netlify/plugin-nextjs` 部署 Next.js 页面和 API 路由。
 
-## 说明
+## 数据库表
 
 当前预约接口会向 `public.appointments` 表写入数据。数据库表结构需要包含以下字段：
 
